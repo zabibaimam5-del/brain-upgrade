@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Brain Upgrade</title>
+<style>
+body{
+font-family:Arial;
+text-align:center;
+background:#0f2027;
+color:white;
+}
+button,input{
+padding:10px;
+margin:5px;
+font-size:16px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🧠 Brain Upgrade</h1>
+
+<p id="question"></p>
+
+<input id="answer">
+<button onclick="check()">Submit</button>
+
+<p id="result"></p>
+
+<script>
+let answer=0;
+
+function newQ(){
+let a=Math.floor(Math.random()*10)+1;
+let b=Math.floor(Math.random()*10)+1;
+answer=a+b;
+document.getElementById("question").innerText=a+" + "+b;
+}
+
+function check(){
+let user=document.getElementById("answer").value;
+if(Number(user)===answer){
+document.getElementById("result").innerText="✅ Correct";
+}else{
+document.getElementById("result").innerText="❌ "+answer;
+}
+newQ();
+}
+
+newQ();
+</script>
+
+</body>
+</html>
