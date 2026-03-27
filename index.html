@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>🧠 Brain Upgrade V22</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f2027">
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:#0f2027;
+color:white;
+text-align:center;
+}
+
+.card{
+margin-top:40px;
+padding:25px;
+width:360px;
+background:#1c2b36;
+border-radius:20px;
+display:inline-block;
+}
+
+input,button{
+padding:14px;
+margin:8px;
+border-radius:10px;
+border:none;
+font-size:16px;
+}
+
+button{
+background:#00f7ff;
+color:black;
+font-weight:bold;
+cursor:pointer;
+}
+
+#question{font-size:26px;margin:15px;}
+</style>
+</head>
+
+<body>
+
+<h1>🧠 Brain Upgrade</h1>
+
+<div class="card">
+
+<!-- LOGIN -->
+<div id="login">
+<input id="email" placeholder="Email"><br>
+<input id="password" type="password" placeholder="Password"><br>
+<button onclick="signup()">Sign Up</button>
+<button onclick="login()">Login</button>
+</div>
+
+<!-- GAME -->
+<div id="game" style="display:none;">
+<p id="stats"></p>
+
+<h2 id="question"></h2>
+
+<input id="answer" placeholder="Answer"><br>
+<button onclick="check()">Submit</button>
+
+<p id="result"></p>
+</div>
+
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+// 🔥 PUT YOUR REAL CONFIG HERE
+const firebaseConfig = {
+apiKey: "YOUR_KEY",
+authDomain: "YOUR_APP.firebaseapp.com",
+databaseURL: "https://brain-upgrade-default-rtdb.firebaseio.com/",
+projectId: "YOUR_APP",
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+let userId="";
+let score=0, level=1, lives=3;
+let correctAnswer=0;
+let locked=false;
+
+// SIGNUP
+function signup(){
+let email=document.getElementById("email").value;
+let pass=document.getElementById("password").value;
+
+auth.createUserWithEmailAndPassword(email,pass)
+.then(()=>alert("Account created"))
+.catch(e=>alert(e.message));
+}
+
+// LOGIN
+function login(){
+let email=document.getElementById("email").value;
+let pass=document.getElementById("password").value;
+
+auth.signInWithEmailAndPassword(email,pass)
+.then(user=>{
+userId=user.user.uid;
+startGame();
+})
+.catch(e=>alert(e.message));
+}
+
+// START GAME
+function startGame(){
+document.getElementById("login").style.display="none";
+document.getElementById("game").style.display="block";
+
+loadData();
+ask();
+}
+
+// LOAD DATA
+function loadData(){
+db.ref("users/"+userId).once("value",snap=>{
+if(snap.exists()){
+let d=snap.val();
+score=d.score||0;
+level=d.level||1;
+lives=d.lives||3;
+}
+updateUI();
+});
+}
+
+// SAVE
+function save(){
+db.ref("users/"+userId).set({
+score:score,
+level:level,
+lives:lives
+});
+}
+
+// RANDOM
+function rand(a,b){
+return Math.floor(Math.random()*(b-a+1))+a;
+}
+
+// ASK
+function ask(){
+locked=false;
+
+let x=rand(1,20), y=rand(1,20);
+correctAnswer=x+y;
+
+document.getElementById("question").innerText=x+" + "+y;
+document.getElementById("answer").value="";
+document.getElementById("result").innerText="";
+}
+
+// CHECK
+function check(){
+if(locked) return;
+
+let ans=document.getElementById("answer").value;
+if(ans==="") return alert("Enter answer");
+
+locked=true;
+
+if(Number(ans)===correctAnswer){
+score++;
+if(score%5===0) level++;
+document.getElementById("result").innerText="✅ Correct";
+}else{
+lives--;
+document.getElementById("result").innerText="❌ "+correctAnswer;
+}
+
+if(lives<=0){
+alert("Game Over");
+score=0; level=1; lives=3;
+}
+
+save();
+updateUI();
+
+setTimeout(()=>ask(),700);
+}
+
+// UI
+function updateUI(){
+document.getElementById("stats").innerText=
+"🏆 L"+level+" | ❤️ "+lives+" | Score "+score;
+}
+
+// PWA (install)
+if ('serviceWorker' in navigator) {
+navigator.serviceWorker.register('sw.js');
+}
+</script>
+
+</body>
+</html>
